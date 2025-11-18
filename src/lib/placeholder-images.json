@@ -1,0 +1,70 @@
+{
+  "placeholderImages": [
+    {
+      "id": "car-suv-1",
+      "description": "A modern white SUV on a scenic road.",
+      "imageUrl": "https://www.topgear.com/sites/default/files/2024/02/2024-cadillac-escalade-v-series-010.jpg",
+      "imageHint": "white suv"
+    },
+    {
+      "id": "car-sedan-1",
+      "description": "A sleek white sedan on the road.",
+      "imageUrl": "https://spn-sta.spinny.com/blog/20220308152631/VW-Virtus-launch.jpg",
+      "imageHint": "white sedan"
+    },
+    {
+      "id": "car-hatchback-1",
+      "description": "A compact red hatchback parked in a vibrant street.",
+      "imageUrl": "https://static0.carbuzzimages.com/wordpress/wp-content/uploads/2025/03/2025-honda-civic-hatchback.jpg",
+      "imageHint": "gray hatchback"
+    },
+    {
+      "id": "car-convertible-1",
+      "description": "A blue convertible on a coastal highway.",
+      "imageUrl": "https://www.lloydmotorgroup.com/VehicleLibrary/101011-Nosg28I8e0Szk5DNrHxnAg.jpg",
+      "imageHint": "blue convertible"
+    },
+    {
+      "id": "car-truck-1",
+      "description": "A powerful silver truck in a rugged landscape.",
+      "imageUrl": "https://www.investopedia.com/thmb/eQJIp9UXcrxlTiPyO9VD0cJ_w9E=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/cq5dam.web.3840.3840-bf2160fea77047d79ef249e4db3565fc.jpeg",
+      "imageHint": "silver truck"
+    },
+    {
+      "id": "car-suv-2",
+      "description": "A futuristic silver SUV.",
+      "imageUrl": "https://console.kr-asia.com/wp-content/uploads/2024/12/Geely-Galaxy-Starship-7-EM-i.jpg",
+      "imageHint": "silver suv"
+    },
+    {
+      "id": "hero-background",
+      "description": "A winding road through a mountain pass at sunset.",
+      "imageUrl": "https://picsum.photos/seed/hero/1920/1080",
+      "imageHint": "winding road"
+    },
+    {
+      "id": "car-sedan-2",
+      "description": "A white sedan's interior dashboard view.",
+      "imageUrl": "https://picsum.photos/seed/car7/800/600",
+      "imageHint": "car interior"
+    },
+    {
+      "id": "car-hatchback-2",
+      "description": "A rear view of a silver hatchback.",
+      "imageUrl": "https://picsum.photos/seed/car8/800/600",
+      "imageHint": "silver hatchback"
+    },
+    {
+      "id": "car-convertible-2",
+      "description": "A yellow convertible with the top down.",
+      "imageUrl": "https://picsum.photos/seed/car9/800/600",
+      "imageHint": "yellow convertible"
+    },
+    {
+      "id": "car-truck-2",
+      "description": "A black truck on a dirt road.",
+      "imageUrl": "https://picsum.photos/seed/car10/800/600",
+      "imageHint": "black truck"
+    }
+  ]
+}
