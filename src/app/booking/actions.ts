@@ -171,28 +171,3 @@ export async function submitBooking(bookingData: any) {
     };
   }
 }
-
-  return await firestore.runTransaction(async (transaction) => {
-    const carDoc = await transaction.get(carRef);
-    if (!carDoc.exists) {
-      throw new Error('Car not found');
-    }
-
-    const carData = carDoc.data();
-
-    const unavailableDates = getDatesInRange(new Date(parsedData.startDate), new Date(parsedData.endDate));
-
-    const newBooking = {
-      ...parsedData,
-      status: 'pending',
-      createdAt: FieldValue.serverTimestamp(),
-    };
-
-    transaction.set(bookingRef, newBooking);
-    transaction.update(carRef, {
-      unavailableDates: FieldValue.arrayUnion(...unavailableDates),
-    });
-
-    return { id: bookingRef.id, ...newBooking };
-  });
-}

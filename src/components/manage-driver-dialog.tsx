@@ -16,7 +16,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ImageUpload } from './image-upload';
+import ImageUpload from './image-upload';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Switch } from './ui/switch';

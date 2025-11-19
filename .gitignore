@@ -9,6 +9,7 @@
 
 # production
 /build
+.idx
 
 # debug
 npm-debug.log*
