@@ -1,8 +1,8 @@
-"use client"
+'use client'
 
 import Image from "next/image"
 import Link from "next/link"
-import type { Car as CarType } from "@/lib/types"
+import type { Car as CarType, Driver } from "@/lib/types"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,19 +13,19 @@ import { cn } from "@/lib/utils"
 
 type CarCardProps = {
   car: CarType | null
+  driver?: Driver | null
   generateImage?: boolean
 }
 
-function CarCard({ car, generateImage = false }: CarCardProps) {
+function CarCard({ car, driver = null, generateImage = false }: CarCardProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const fallbackImage = "/classic-red-convertible.png"
 
   // Support new fields: prefer `cloudinaryUrl`, then `images[0]`, then `fileUrl`.
   const hasUserImage = !!(
-    car && (
-      (car as any).cloudinaryUrl || (car.images && car.images.length > 0) || (car as any).fileUrl
-    )
+    car &&
+    (car.images && car.images.length > 0)
   )
   const shouldGenerateImage = generateImage && !hasUserImage && car
 
@@ -38,25 +38,9 @@ function CarCard({ car, generateImage = false }: CarCardProps) {
       setLoading(true)
 
       if (hasUserImage) {
-        // Prefer cloudinaryUrl if present
-        const cloudUrl = (car as any).cloudinaryUrl
-        if (cloudUrl) {
-          setImageUrl(cloudUrl)
-          setLoading(false)
-          return
-        }
-
         // Next prefer images[0]
         if (car.images && car.images.length > 0) {
           setImageUrl(car.images[0])
-          setLoading(false)
-          return
-        }
-
-        // Then fileUrl
-        const fileUrl = (car as any).fileUrl
-        if (fileUrl) {
-          setImageUrl(fileUrl)
           setLoading(false)
           return
         }
@@ -85,7 +69,7 @@ function CarCard({ car, generateImage = false }: CarCardProps) {
 
   if (!car) {
     return (
-      <Card className="flex flex-col overflow-hidden transition-all duration-300 shadow-lg">
+      <Card className="group relative flex flex-col overflow-hidden transition-all duration-300 shadow-lg">
         <CardHeader className="p-0">
           <Skeleton className="h-56 w-full" />
         </CardHeader>
@@ -116,7 +100,7 @@ function CarCard({ car, generateImage = false }: CarCardProps) {
   return (
     <Card
       className={cn(
-        "flex flex-col overflow-hidden transition-all duration-300 hover:shadow-primary/20 shadow-lg",
+        "group relative flex flex-col overflow-hidden transition-all duration-300 hover:shadow-primary/20 shadow-lg",
         !isAvailable && "opacity-60 hover:opacity-80",
       )}
     >
@@ -141,6 +125,15 @@ function CarCard({ car, generateImage = false }: CarCardProps) {
             <Badge className={cn("absolute top-3 right-3", availabilityStyles[isAvailable.toString() as 'true' | 'false'])}>
               {isAvailable ? "Available" : "Booked"}
             </Badge>
+            {driver && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2 text-white flex items-center gap-2">
+                <Image src={driver.profileImage || '/placeholder-user.jpg'} alt={driver.firstName} width={32} height={32} className="rounded-full" />
+                <div>
+                  <p className="font-bold text-sm">{driver.firstName} {driver.lastName}</p>
+                  <p className="text-xs">{driver.rating?.toFixed(1)}★ ({driver.experience} yrs)</p>
+                </div>
+              </div>
+            )}
           </div>
         </Link>
       </CardHeader>
@@ -164,6 +157,13 @@ function CarCard({ car, generateImage = false }: CarCardProps) {
             <span className="material-symbols-outlined text-lg text-primary">settings</span>
             <span>{car.transmission}</span>
           </div>
+        </div>
+        <div className="absolute top-0 right-0 bottom-0 left-0 bg-black/70 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center">
+            <h4 className="font-bold text-lg mb-2">Features</h4>
+            <ul className="text-sm list-disc pl-5">
+                {car.features.slice(0, 3).map(feature => <li key={feature}>{feature}</li>)}
+                {car.features.length > 3 && <li>...and more</li>}
+            </ul>
         </div>
       </CardContent>
       <CardFooter className="p-4 flex items-center justify-between bg-secondary/30">

@@ -2,19 +2,18 @@
 
 import { HeroSearchForm } from "@/components/hero-search-form"
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
-import { CarCard } from "@/components/car-card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { collection } from "firebase/firestore"
 import type { Car } from "@/lib/types"
 import { useLanguage } from "@/hooks/use-language"
 import { useTranslation } from "@/lib/i18n"
+import { FeaturedServices } from "@/components/featured-services"
 
 export default function Home() {
   const firestore = useFirestore()
   const carsQuery = useMemoFirebase(() => collection(firestore, "cars"), [firestore])
   const { data: cars, isLoading } = useCollection<Car>(carsQuery)
-  const featuredCars = cars?.slice(0, 3) || []
 
   const { language } = useLanguage()
   const t = useTranslation(language)
@@ -85,24 +84,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-secondary/5">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold">{t("hero.featuredCars")}</h2>
-            <p className="text-muted-foreground mt-2">{t("hero.featuredCarsDesc")}</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {isLoading
-              ? Array.from({ length: 3 }).map((_, i) => <CarCard key={i} car={null} />)
-              : featuredCars.map((car) => <CarCard key={car.id} car={car} generateImage={true} />)}
-          </div>
-          <div className="text-center mt-12">
-            <Button asChild size="lg">
-              <Link href="/browse">{t("hero.browseAllCars")}</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <FeaturedServices />
 
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 text-center">

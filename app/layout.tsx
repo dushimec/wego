@@ -6,6 +6,8 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthGuard } from '@/components/auth-guard';
+import { usePathname } from 'next/navigation';
 
 
 export default function RootLayout({
@@ -13,6 +15,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const noHeaderFooter = pathname.startsWith('/admin') || pathname.startsWith('/dashboard');
+
   return (
     <html lang="en" className="dark">
       <head>
@@ -24,12 +29,14 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased min-h-screen flex flex-col")} suppressHydrationWarning>
         <FirebaseClientProvider>
-          <Header />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <AuthGuard>
+            {!noHeaderFooter && <Header />}
+            <main className="flex-grow">
+              {children}
+            </main>
+            {!noHeaderFooter && <Footer />}
+            <Toaster />
+          </AuthGuard>
         </FirebaseClientProvider>
       </body>
     </html>

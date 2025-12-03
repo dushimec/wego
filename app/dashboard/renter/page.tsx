@@ -4,9 +4,20 @@ import { useAuthWithProfile } from '@/hooks/use-auth-with-profile';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { RenterBookingManagement } from '@/components/renter-booking-management';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { Booking } from '@/lib/types';
 
 export default function DashboardRenterPage() {
-  const { userProfile } = useAuthWithProfile();
+  const { user, userProfile, loading: authLoading } = useAuthWithProfile();
+  const firestore = useFirestore();
+
+  const bookingsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'bookings'), where('customerId', '==', user.uid));
+  }, [firestore, user]);
+
+  const { data: bookings, isLoading: bookingsLoading } = useCollection<Booking>(bookingsQuery);
 
   // Only renters can access this page
   if (userProfile && userProfile.role !== 'renter') {
@@ -21,6 +32,8 @@ export default function DashboardRenterPage() {
     );
   }
 
+  const isLoading = authLoading || bookingsLoading;
+
   return (
     <div className="space-y-6">
       <div>
@@ -28,7 +41,13 @@ export default function DashboardRenterPage() {
         <p className="text-lg text-muted-foreground">Manage your car rental bookings, report issues, and make payments</p>
       </div>
 
-      <RenterBookingManagement />
+      {isLoading ? (
+        <p>Loading bookings...</p>
+      ) : bookings && bookings.length > 0 ? (
+        <RenterBookingManagement bookings={bookings} />
+      ) : (
+        <p>You have no bookings.</p>
+      )}
     </div>
   );
 }

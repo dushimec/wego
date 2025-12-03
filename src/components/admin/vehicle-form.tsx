@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { VehiclePreviewModal } from "./vehicle-preview-modal"
+import { useAuth } from "@/firebase/client-provider"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,7 @@ interface ImageUploadProgress {
 }
 
 export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
+  const { auth } = useAuth()
   const [formData, setFormData] = useState({
     brand: vehicle?.brand || "",
     model: vehicle?.model || "",
@@ -49,7 +51,9 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
   const [images, setImages] = useState<File[]>([])
   const [existingImages, setExistingImages] = useState<string[]>(vehicle?.images || [])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
-  const [uploadProgress, setUploadProgress] = useState<ImageUploadProgress>({})
+  const [uploadProgress, setUploadProgress] = useState<ImageUploadProgress>({
+    total: 0,
+  })
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
@@ -170,7 +174,7 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
       throw err instanceof Error ? err : new Error("Failed to upload images")
     } finally {
       setUploading(false)
-      setUploadProgress({})
+      setUploadProgress({ total: 0 })
     }
   }
 
@@ -181,6 +185,11 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
 
     try {
       const allImageUrls = await uploadImagesToCloudinary()
+      const token = await auth?.currentUser?.getIdToken()
+
+      if (!token) {
+        throw new Error("Authentication token not available.")
+      }
 
       const submitData = {
         ...formData,
@@ -195,6 +204,7 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
         method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(submitData),
       })

@@ -13,6 +13,9 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BookingForm } from '@/components/booking-form';
+import { AnimatedSection } from '@/components/animated-section';
+import { motion } from 'framer-motion';
+import { fadeInUp } from '@/lib/animations';
 
 const getAvailabilityProps = (available: Car['available']) => {
     if (available) {
@@ -45,9 +48,9 @@ export default function CarDetailsPage() {
   const availability = getAvailabilityProps(car.available);
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <AnimatedSection className="container mx-auto px-4 py-12">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        <div>
+        <motion.div variants={fadeInUp}>
           <Carousel className="w-full rounded-lg overflow-hidden shadow-lg">
             <CarouselContent>
               {carImages && carImages.length > 0 ? carImages.map((imgUrl, index) => (
@@ -73,9 +76,9 @@ export default function CarDetailsPage() {
             <CarouselPrevious className="left-4" />
             <CarouselNext className="right-4" />
           </Carousel>
-        </div>
+        </motion.div>
         
-        <div>
+        <motion.div variants={fadeInUp}>
           <div className='flex justify-between items-start'>
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold font-headline mb-2">{car.brand} {car.model}</h1>
@@ -90,25 +93,25 @@ export default function CarDetailsPage() {
           </div>
           <p className="mt-4 text-lg text-muted-foreground">{car.description}</p>
           
-          <div className="my-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            <div className="p-4 bg-card rounded-lg border">
+          <AnimatedSection stagger className="my-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <motion.div variants={fadeInUp} className="p-4 bg-card rounded-lg border">
               <span className="material-symbols-outlined text-3xl text-primary mb-2 mx-auto">group</span>
               <p className="font-semibold">{car.seats} Seats</p>
-            </div>
-            <div className="p-4 bg-card rounded-lg border">
+            </motion.div>
+            <motion.div variants={fadeInUp} className="p-4 bg-card rounded-lg border">
               <span className="material-symbols-outlined text-3xl text-primary mb-2 mx-auto">local_gas_station</span>
               <p className="font-semibold">{car.fuelType}</p>
-            </div>
-            <div className="p-4 bg-card rounded-lg border">
+            </motion.div>
+            <motion.div variants={fadeInUp} className="p-4 bg-card rounded-lg border">
               <span className="material-symbols-outlined text-3xl text-primary mb-2 mx-auto">settings</span>
               <p className="font-semibold">{car.transmission}</p>
-            </div>
-             <div className="p-4 bg-card rounded-lg border">
+            </motion.div>
+             <motion.div variants={fadeInUp} className="p-4 bg-card rounded-lg border">
               <span className="material-symbols-outlined text-3xl text-primary mb-2 mx-auto">speed</span>
               <p className="font-semibold">Unlimited</p>
               <p className="text-xs text-muted-foreground">Mileage</p>
-            </div>
-          </div>
+            </motion.div>
+          </AnimatedSection>
           
           <Card className="bg-secondary/30">
             <CardHeader>
@@ -127,11 +130,11 @@ export default function CarDetailsPage() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
       
-      <div className="mt-16 grid md:grid-cols-2 gap-8 lg:gap-12">
-        <div>
+      <AnimatedSection stagger className="mt-16 grid md:grid-cols-2 gap-8 lg:gap-12">
+        <motion.div variants={fadeInUp}>
           <h2 className="text-2xl font-bold mb-4">Key Features</h2>
           <ul className="space-y-2">
             {car.features.map((feature, i) => (
@@ -141,8 +144,8 @@ export default function CarDetailsPage() {
               </li>
             ))}
           </ul>
-        </div>
-        <div>
+        </motion.div>
+        <motion.div variants={fadeInUp}>
           <h2 className="text-2xl font-bold mb-4">Rental Policies</h2>
            <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
@@ -164,9 +167,9 @@ export default function CarDetailsPage() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </AnimatedSection>
+    </AnimatedSection>
   );
 }
 

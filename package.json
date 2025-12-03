@@ -58,6 +58,7 @@
     "firebase": "latest",
     "firebase-admin": "latest",
     "firebase-functions": "latest",
+    "framer-motion": "^12.23.24",
     "genkit": "latest",
     "immer": "latest",
     "input-otp": "latest",

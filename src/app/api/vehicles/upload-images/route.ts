@@ -1,8 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { cloudinaryService } from "@/lib/cloudinary-service"
+import { auth } from "@/lib/firebase-admin"
 
 export async function POST(req: NextRequest) {
   try {
+    const token = req.headers.get("Authorization")?.replace("Bearer ", "")
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    await auth.verifyIdToken(token)
+
     const formData = await req.formData()
     const files: File[] = []
 

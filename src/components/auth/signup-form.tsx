@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Phone, Mail, Lock, User } from "lucide-react"
+import { Phone, Mail, Lock, User, Eye, EyeOff } from "lucide-react" // Import Eye and EyeOff
 
 export function SignUpForm() {
   const router = useRouter()
@@ -21,6 +21,7 @@ export function SignUpForm() {
   })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false) // New state for password visibility
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -131,28 +132,58 @@ export function SignUpForm() {
             <label className="text-sm font-medium flex items-center gap-2">
               <Lock className="w-4 h-4" /> Password
             </label>
-            <Input
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••"
-              disabled={loading}
-            />
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••"
+                disabled={loading}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword((prev) => !prev)}
+                type="button"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <Lock className="w-4 h-4" /> Confirm Password
             </label>
-            <Input
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="••••••"
-              disabled={loading}
-            />
+            <div className="relative">
+              <Input
+                name="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="••••••"
+                disabled={loading}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword((prev) => !prev)}
+                type="button"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

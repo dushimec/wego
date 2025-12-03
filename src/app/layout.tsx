@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-
+import { ChatbotWidget } from '@/components/chatbot-widget';
 
 export default function RootLayout({
   children,
@@ -30,6 +30,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <Toaster />
+          <ChatbotWidget />
         </FirebaseClientProvider>
       </body>
     </html>

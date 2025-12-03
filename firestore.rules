@@ -1,166 +1,175 @@
-/**
- * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model for user profiles
- * and allows public read access to car listings, bookings, notifications, and reviews, with owner-only write access.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profiles. Document ID is the Firebase Auth UID.
- * - /cars/{carId}: Stores car listings.
- * - /bookings/{bookingId}: Stores car rental bookings.
- * - /notifications/{notificationId}: Stores notifications for users.
- * - /reviews/{reviewId}: Stores reviews for car rentals.
- * - /locations/{locationId}: Stores map location data.
- *
- * Key Security Decisions:
- * - User profiles are strictly owned by the authenticated user. Only the user can read/write their own profile.
- * - Car listings, bookings, notifications, and reviews are publicly readable.
- * - Car listings, bookings, notifications, and reviews can only be created, updated, or deleted by an authenticated user
- *   who is the owner of the specific resource. This assumes that the resources each have a field like `ownerId` or
- *   `userId` that matches the authenticated user's `uid`.
- * - Location data is publicly readable for use in maps, but can only be written by authenticated users.
- *
- * Denormalization for Authorization:
- *   The rules rely on each document having an `ownerId` or `userId` field to determine ownership for write operations.
- *   For example, a car document must have an `ownerId` field that matches the user ID of the car's owner.
- *   Similarly, a booking document must have `customerId` for who made the booking and `ownerId` for the car owner.
- */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Controls access to user profile documents.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (get) Authenticated user can read their own profile.
-     * @allow (create) Authenticated user can create their own profile if the userId matches their auth UID.
-     * @allow (update) Authenticated user can update their own profile if the userId matches their auth UID.
-     * @allow (delete) Authenticated user can delete their own profile if the userId matches their auth UID.
-     * @deny (get) Authenticated user cannot read another user's profile.
-     * @deny (create) Authenticated user cannot create a profile with a userId that does not match their auth UID.
-     * @deny (update) Authenticated user cannot update another user's profile.
-     * @deny (delete) Authenticated user cannot delete another user's profile.
-     * @principle Enforces document ownership for user profiles.
-     */
+    // ------------------ Helper Functions ------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Check ownership of an existing document
+    function isExistingOwner(userId) {
+      return isSignedIn() && resource.data.userId == userId;
+    }
+
+    // Check user's role from custom claims
+    function hasRole(role) {
+      return isSignedIn() && request.auth.token[role] == true;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isManager() {
+      return hasRole('manager');
+    }
+
+    // ------------------ Schema Validation Functions ------------------
+
+    function isValidUser(userData) {
+      return userData.hasAll(['id', 'email', 'firstName', 'lastName', 'role', 'createdAt'])
+        && userData.id is string
+        && userData.email is string && userData.email.matches('.*@.*')
+        && userData.firstName is string
+        && userData.lastName is string
+        && userData.role is string && userData.role in ['customer', 'driver', 'manager', 'admin']
+        && userData.createdAt is timestamp;
+    }
+
+    function isValidDriver(driverData) {
+      return driverData.hasAll(['id', 'firstName', 'lastName', 'licenseNumber', 'isVerified', 'availabilityStatus'])
+        && driverData.id is string
+        && driverData.firstName is string
+        && driverData.lastName is string
+        && driverData.licenseNumber is string
+        && driverData.isVerified is bool
+        && driverData.availabilityStatus is string && driverData.availabilityStatus in ['available', 'unavailable', 'on-trip'];
+    }
+
+    function isValidBooking(bookingData) {
+        return bookingData.hasAll(['id', 'customerId', 'bookingType', 'status', 'startDate', 'endDate'])
+        && bookingData.id is string
+        && bookingData.customerId is string
+        && bookingData.bookingType is string && bookingData.bookingType in ['car-only', 'driver-only', 'car-with-driver']
+        && bookingData.status is string && bookingData.status in ['pending', 'approved', 'in-progress', 'completed', 'cancelled']
+        && bookingData.startDate is timestamp
+        && bookingData.endDate is timestamp;
+    }
+
+    // ------------------ Collection Rules ------------------
+
     match /users/{userId} {
-      // Validate that userId from request matches the authenticated user's ID.
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.email == request.auth.token.email;
-      allow update: if isSignedIn() && isOwner(userId) && (request.resource.data.email == resource.data.email);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      // Users can read their own profile. Admins/Managers can read any profile.
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin() || isManager());
+      allow list: if isAdmin() || isManager();
+
+      // A user can create their own profile.
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+
+      // A user can update their own profile fields, but not role or email.
+      // Admins/Managers can update the 'isVerified' status.
+      allow update: if isSignedIn() && isValidUser(request.resource.data) && (
+          (isOwner(userId) && request.resource.data.email == resource.data.email && request.resource.data.role == resource.data.role) ||
+          ((isAdmin() || isManager()) && request.resource.data.isVerified != resource.data.isVerified)
+      );
+
+      allow delete: if isAdmin();
     }
 
-    /**
-     * @description Controls access to car listing documents. Allows public reads, but restricts writes to car owners.
-     * @path /databases/{database}/documents/cars/{carId}
-     * @allow (get) Any user can read car listing details.
-     * @allow (list) Any user can list car listings.
-     * @allow (create) Only the car owner can create a car listing, and the 'ownerId' field must match their auth UID.
-     * @allow (update) Only the car owner can update a car listing.
-     * @allow (delete) Only the car owner can delete a car listing.
-     * @deny (create) A user cannot create a car listing for another user by spoofing the 'ownerId' field.
-     * @deny (update) A user cannot update a car listing they do not own.
-     * @deny (delete) A user cannot delete a car listing they do not own.
-     * @principle Public read access with owner-only writes, enforces document ownership for writes.
-     */
+    match /drivers/{driverId} {
+      allow read, list: if isSignedIn();
+
+      allow create: if (isAdmin() || isManager()) && isValidDriver(request.resource.data);
+
+      // Drivers can update their own profile. Managers/Admins can verify them.
+      allow update: if isSignedIn() && isValidDriver(request.resource.data) && (
+          isOwner(driverId) || 
+          ((isAdmin() || isManager()) && request.resource.data.isVerified != resource.data.isVerified)
+      );
+      
+      allow delete: if isAdmin() || isManager();
+
+      // Drivers can update their own real-time location.
+      match /currentLocation/{locationId} {
+        allow write: if isOwner(driverId);
+      }
+    }
+
     match /cars/{carId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      // NOTE: Firestore does not support field-level read restrictions.
+      // This rule allows the entire document to be read publicly.
+      allow read: if true;
+
+      // Only Admins/Managers can manage car listings.
+      allow write: if isAdmin() || isManager();
     }
 
-    /**
-     * @description Controls access to booking documents. Allows public reads, but restricts writes to booking owners.
-     * @path /databases/{database}/documents/bookings/{bookingId}
-     * @allow (get) Any user can read booking details.
-     * @allow (list) Any user can list bookings.
-     * @allow (create) Only the booking creator can create a booking, and the 'customerId' field must match their auth UID.
-     * @allow (update) Only the booking creator or car owner can update a booking.
-     * @allow (delete) Only the booking creator can delete a booking.
-     * @deny (create) A user cannot create a booking for another user by spoofing the 'customerId' field.
-     * @deny (update) A user cannot update a booking they did not create or do not own the car.
-     * @deny (delete) A user cannot delete a booking they did not create.
-     * @principle Public read access with owner-only writes, enforces document ownership for writes.
-     */
     match /bookings/{bookingId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.resource.data.customerId == request.auth.uid;
-      allow update: if isSignedIn() && (isExistingOwner(resource.data.customerId) || isExistingOwner(resource.data.ownerId));
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.customerId);
+      // Customer, assigned Driver, Manager, or Admin can read the booking.
+      allow get: if isSignedIn() && (isOwner(resource.data.customerId) || isOwner(resource.data.driverId) || isManager() || isAdmin());
+
+      // Authenticated users can list bookings; filtering should be enforced by queries.
+      allow list: if isSignedIn();
+
+      // A customer can create a booking for themselves.
+      allow create: if isOwner(request.resource.data.customerId) && isValidBooking(request.resource.data);
+
+      // A customer can only cancel their booking. Driver/Manager/Admin can update status.
+      allow update: if isSignedIn() && isValidBooking(request.resource.data) && (
+          (isOwner(resource.data.customerId) && request.resource.data.status == 'cancelled' && resource.data.status != 'cancelled') ||
+          isOwner(resource.data.driverId) || isManager() || isAdmin()
+      );
+
+      allow delete: if false; // Bookings should be cancelled, not deleted.
     }
 
-    /**
-     * @description Controls access to notification documents. Allows public reads, but restricts writes to notification target user.
-     * @path /databases/{database}/documents/notifications/{notificationId}
-     * @allow (get) Any user can read notification details.
-     * @allow (list) Any user can list notifications.
-     * @allow (create) Only the intended user can create a notification, and the 'userId' field must match their auth UID.
-     * @allow (update) Only the intended user can update a notification.
-     * @allow (delete) Only the intended user can delete a notification.
-     * @deny (create) A user cannot create a notification for another user by spoofing the 'userId' field.
-     * @deny (update) A user cannot update a notification not intended for them.
-     * @deny (delete) A user cannot delete a notification not intended for them.
-     * @principle Public read access with owner-only writes, enforces document ownership for writes.
-     */
+    match /paymentRecords/{paymentId} {
+      // Customer, Manager, or Admin can read payment records.
+      allow get: if isSignedIn() && (isOwner(resource.data.customerId) || isManager() || isAdmin());
+
+      // Writes are disallowed from the client; must be done by a trusted server.
+      allow write: if false;
+    }
+
+    match /driverAssignments/{assignmentId} {
+        // Only drivers, managers, and admins can access assignments.
+        allow read: if isSignedIn() && (isOwner(resource.data.driverId) || isManager() || isAdmin());
+        allow write: if isManager() || isAdmin(); // Only managers/admins can assign drivers.
+    }
+
+    match /invoices/{invoiceId} {
+        // Only customers, managers, and admins can access invoices.
+        allow read: if isSignedIn() && (isOwner(resource.data.customerId) || isManager() || isAdmin());
+        allow write: if false; // Invoices are created by the server.
+    }
+
     match /notifications/{notificationId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(resource.data.userId);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.userId);
+      // Users can only access their own notifications.
+      allow read, write: if isExistingOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
     }
 
-    /**
-     * @description Controls access to review documents. Allows public reads, but restricts writes to review authors.
-     * @path /databases/{database}/documents/reviews/{reviewId}
-     * @allow (get) Any user can read review details.
-     * @allow (list) Any user can list reviews.
-     * @allow (create) Only the review author can create a review, and the 'userId' field must match their auth UID.
-     * @allow (update) Only the review author can update a review.
-     * @allow (delete) Only the review author can delete a review.
-     * @deny (create) A user cannot create a review for another user by spoofing the 'userId' field.
-     * @deny (update) A user cannot update a review they did not author.
-     * @deny (delete) A user cannot delete a review they did not author.
-     * @principle Public read access with owner-only writes, enforces document ownership for writes.
-     */
     match /reviews/{reviewId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(resource.data.userId);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.userId);
+      allow read: if true;
+      // A user can only write a review for a booking they made.
+      allow write: if isOwner(request.resource.data.userId);
     }
 
-    /**
-     * @description Controls access to location documents. Allows public reads, but restricts writes to authenticated users.
-     * @path /databases/{database}/documents/locations/{locationId}
-     * @allow (read) Any user can read location data.
-     * @allow (write) Authenticated users can write location data.
-     * @principle Public read access with authenticated-only writes.
-     */
     match /locations/{locationId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isAdmin() || isManager(); // Only admins/managers can add/edit locations.
     }
-  }
 
-  // Helper functions
-
-  // Checks if the user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  // Checks if the user ID matches the authenticated user's ID.
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-  // Checks if the user ID matches the authenticated user's ID and the document exists.
-  function isExistingOwner(userId) {
-    return isSignedIn() && isOwner(userId) && resource != null;
+    match /bookingExtras/{extraId} {
+        allow read: if true;
+        allow write: if isAdmin() || isManager();
+    }
   }
 }

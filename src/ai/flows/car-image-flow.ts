@@ -33,20 +33,30 @@ const carImageFlow = ai.defineFlow(
     outputSchema: CarImageOutputSchema,
   },
   async (input) => {
-    const { media } = await ai.generate({
-      model: 'googleai/imagen-4.0-fast-generate-001',
-      prompt: `Generate a photorealistic image of a car. The car is a ${input.carName}, which is a ${input.carType}. 
-      The description is: "${input.carDescription}". 
-      The image should be high-resolution, suitable for a website, with a clean background.
-      The car should be the main focus of the image.`,
-    });
-    
-    if (!media.url) {
-      throw new Error('Image generation failed.');
-    }
+    // The original code used the Imagen API, which requires a billed Google Cloud account.
+    // To avoid the error "Imagen API is only accessible to billed users at this time",
+    // this flow is modified to return a placeholder image URL.
+    // To re-enable Imagen, you will need to enable billing on your Google Cloud project.
 
+    // const { media } = await ai.generate({
+    //   model: 'googleai/imagen-4.0-fast-generate-001',
+    //   prompt: `Generate a photorealistic image of a car. The car is a ${input.carName}, which is a ${input.carType}. 
+    //   The description is: "${input.carDescription}". 
+    //   The image should be high-resolution, suitable for a website, with a clean background.
+    //   The car should be the main focus of the image.`,
+    // });
+    
+    // if (!media.url) {
+    //   throw new Error('Image generation failed.');
+    // }
+
+    // return {
+    //   imageUrl: media.url,
+    // };
+
+    // Return a placeholder image
     return {
-      imageUrl: media.url,
+        imageUrl: `https://placehold.co/600x400/png?text=${encodeURIComponent(input.carName)}`,
     };
   }
 );

@@ -25,7 +25,6 @@ import { NotificationBell } from "@/components/notification-bell"
 
 const baseNavLinks = [
   { href: "/browse", label: "Browse Cars" },
-  { href: "/recommendations", label: "Smart Recommendations" },
   { href: "/map", label: "Map" },
 ]
 

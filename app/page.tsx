@@ -32,7 +32,10 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 animate-fade-in-up">{t("hero.title")}</h1>
+        <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 animate-fade-in-up">
+            <span className="text-white">We</span><span className="text-primary">Go</span>
+            <span className="text-white"> – Your Journey, Your Car</span>
+        </h1>
           <p className="text-base md:text-lg text-primary-foreground/90 max-w-3xl mb-4 animate-fade-in-up animation-delay-300 leading-relaxed">
             <span className="font-semibold block mb-2">{t("hero.subtitle")}</span>
             {t("hero.description")}

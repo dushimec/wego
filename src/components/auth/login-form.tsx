@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Mail, Lock } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 
 export function LoginForm() {
   const router = useRouter()
   const [formData, setFormData] = useState({ email: "", password: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -84,14 +85,32 @@ export function LoginForm() {
             <label className="text-sm font-medium flex items-center gap-2">
               <Lock className="w-4 h-4" /> Password
             </label>
-            <Input
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••"
-              disabled={loading}
-            />
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••"
+                disabled={loading}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2"
+                onClick={() => setShowPassword((prev) => !prev)}
+                type="button"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                )}
+                <span className="sr-only">
+                  {showPassword ? "Hide password" : "Show password"}
+                </span>
+              </Button>
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

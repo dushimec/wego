@@ -10,6 +10,7 @@ import { useDoc } from "@/firebase"
 import { doc } from "firebase/firestore"
 import { useFirestore } from "@/firebase"
 import type { User, Booking, Car } from "@/lib/types"
+import { AnimatedSection } from "./animated-section"
 
 export function RoleBasedDashboard() {
   const { userProfile, isLoading: authLoading } = useAuthWithProfile()
@@ -46,41 +47,49 @@ export function RoleBasedDashboard() {
   switch (userProfile.role) {
     case "admin":
       return (
-        <AdminDashboard
-          users={users?.users || null}
-          cars={cars?.cars || null}
-          bookings={bookings?.bookings || null}
-          loading={isLoading}
-        />
+        <AnimatedSection>
+          <AdminDashboard
+            users={users?.users || null}
+            cars={cars?.cars || null}
+            bookings={bookings?.bookings || null}
+            loading={isLoading}
+          />
+        </AnimatedSection>
       )
     case "manager":
       return (
-        <OwnerDashboard
-          ownerCars={cars?.cars?.filter((c) => c.managerId === userProfile.id) || null}
-          ownerBookings={bookings?.bookings || null}
-          carsLoading={isLoading}
-          bookingsLoading={isLoading}
-          user={userProfile}
-        />
+        <AnimatedSection>
+          <OwnerDashboard
+            ownerCars={cars?.cars?.filter((c) => c.managerId === userProfile.id) || null}
+            ownerBookings={bookings?.bookings || null}
+            carsLoading={isLoading}
+            bookingsLoading={isLoading}
+            user={userProfile}
+          />
+        </AnimatedSection>
       )
     case "driver":
       return (
-        <DriverDashboard
-          driver={userProfile}
-          cars={cars?.cars || null}
-          bookings={bookings?.bookings || null}
-          loading={isLoading}
-        />
+        <AnimatedSection>
+          <DriverDashboard
+            driver={userProfile}
+            cars={cars?.cars || null}
+            bookings={bookings?.bookings || null}
+            loading={isLoading}
+          />
+        </AnimatedSection>
       )
     case "renter":
     default:
       return (
-        <RenterDashboard
-          renter={userProfile}
-          cars={cars?.cars || null}
-          bookings={bookings?.bookings || null}
-          loading={isLoading}
-        />
+        <AnimatedSection>
+          <RenterDashboard
+            renter={userProfile}
+            cars={cars?.cars || null}
+            bookings={bookings?.bookings || null}
+            loading={isLoading}
+          />
+        </AnimatedSection>
       )
   }
 }

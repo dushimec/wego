@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { Upload } from "lucide-react"
 import type { Driver } from "@/lib/types"
+import { useUser } from "@/firebase" // Import the useUser hook
 
 interface DriverFormProps {
   driver?: Driver
@@ -17,6 +17,7 @@ interface DriverFormProps {
 }
 
 export function DriverForm({ driver, onSuccess }: DriverFormProps) {
+  const { user } = useUser() // Get the authenticated user
   const [formData, setFormData] = useState({
     firstName: driver?.firstName || "",
     lastName: driver?.lastName || "",
@@ -54,6 +55,10 @@ export function DriverForm({ driver, onSuccess }: DriverFormProps) {
     setLoading(true)
 
     try {
+      if (!user) {
+        throw new Error("You must be logged in to perform this action.")
+      }
+      const token = await user.getIdToken()
       const formDataObj = new FormData()
       Object.entries(formData).forEach(([key, value]) => {
         if (Array.isArray(value)) {
@@ -73,6 +78,9 @@ export function DriverForm({ driver, onSuccess }: DriverFormProps) {
       const response = await fetch(endpoint, {
         method,
         body: formDataObj,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
 
       if (!response.ok) throw new Error("Operation failed")

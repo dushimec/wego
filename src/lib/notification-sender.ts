@@ -16,7 +16,7 @@ async function sendEmail(sendTo: string, subject: string, text: string): Promise
   const from = process.env.SENDGRID_FROM || 'no-reply@example.com';
   if (!apiKey) {
     console.warn('SendGrid not configured, skipping email send');
-    return { success: false, details: 'sendgrid-not-configured' };
+    throw new Error('SendGrid not configured');
   }
 
   const body = {
@@ -34,7 +34,7 @@ async function sendEmail(sendTo: string, subject: string, text: string): Promise
 
   if (!res.ok) {
     const textResp = await res.text();
-    return { success: false, details: textResp };
+    throw new Error(`SendGrid error: ${textResp}`);
   }
   return { success: true };
 }
@@ -49,7 +49,7 @@ async function sendSms(to: string, message: string): Promise<SendResult> {
 
   if (!accountSid || !authToken || !from) {
     console.warn('Twilio not configured, skipping SMS send');
-    return { success: false, details: 'twilio-not-configured' };
+    throw new Error('Twilio not configured');
   }
 
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
@@ -66,7 +66,7 @@ async function sendSms(to: string, message: string): Promise<SendResult> {
 
   if (!res.ok) {
     const textResp = await res.text();
-    return { success: false, details: textResp };
+    throw new Error(`Twilio error: ${textResp}`);
   }
   return { success: true };
 }
